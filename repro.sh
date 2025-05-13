@@ -27,7 +27,57 @@ esac
 
 
 #################################################################################################################
-## HPC Vesrion
+## mellanox version
+#################################################################################################################
+
+XPMEM_PFX=$(readlink -f xpmem_prefix)
+rm -rf $XPMEM_PFX
+
+[ ! -d xpmem ] && git clone git@github.com:tzafrir-mellanox/xpmem.git -b kmake_config
+PATCH_1=$(readlink -f 63.patch)
+(
+    cd xpmem
+    (git clean -xdff && git checkout .)
+    if [ ! -f configure ]; then
+        ./autogen.sh
+    fi
+    if [ ! -f Makefile ]; then
+        ./configure --prefix=${XPMEM_PFX} \
+            --with-kerneldir=$KERNEL_SOURCE_DIR --with-kernelvers=${KERNEL_VERSION%.*}
+            # --with-module-prefix=/lib/modules/$(uname -r) \
+    fi
+    make
+    make install
+)
+exit 0
+#################################################################################################################
+## HPC Vesrion - git repo
+#################################################################################################################
+
+XPMEM_PFX=$(readlink -f xpmem_prefix)
+rm -rf $XPMEM_PFX
+
+[ ! -d xpmem ] && git clone git@github.com:hpc/xpmem.git
+[ ! -f 63.patch ] && curl -L -C - https://patch-diff.githubusercontent.com/raw/hpc/xpmem/pull/63.patch -o 63.patch
+PATCH_1=$(readlink -f 63.patch)
+(
+    cd xpmem
+    (git clean -xdff && git checkout .)
+    git apply $PATCH_1
+    if [ ! -f configure ]; then
+        ./autogen.sh
+    fi
+    if [ ! -f Makefile ]; then
+        ./configure --prefix=${XPMEM_PFX} \
+            --with-kerneldir=$KERNEL_SOURCE_DIR --with-kernelvers=${KERNEL_VERSION%.*}
+            # --with-module-prefix=/lib/modules/$(uname -r) \
+    fi
+    make
+    make install
+)
+exit 0
+#################################################################################################################
+## HPC Vesrion - release
 #################################################################################################################
 
 XPMEM_SRC=$(readlink -f xpmem-2.6.3)
@@ -83,7 +133,7 @@ rm -rf $XPMEM_PFX
             --with-kerneldir=$KERNEL_SOURCE_DIR --with-kernelvers=${KERNEL_VERSION%.*}
             # --with-module-prefix=/lib/modules/$(uname -r) \
     fi
-    make 
+    make
     make install
 )
 
