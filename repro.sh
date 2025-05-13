@@ -10,25 +10,27 @@ case ${ID_LIKE:-${ID}} in
         # dnf download --source kernel
         # sudo dnf group install "Development Tools"
         KERNEL_VERSION=$(uname -r)
-        KERNEL_SOURCE_DIR=/usr/src/kernels/${KERNEL_VERSION}/
-        
+        KERNEL_SOURCE_DIR=$(readlink -f linux-source-${KERNEL_VERSION})
+        [ ! -d ${KERNEL_SOURCE_DIR} ] && cp -R /usr/src/kernels/${KERNEL_VERSION}/ linux-source-${KERNEL_VERSION}
         ;;
     debian)
-        KERNEL_VERSION=$(uname -r)
         # sudo apt install build-essential curl autoconf automake libtool pkgconf tar bzip2 patch linux-headers-$(uname -r) linux-source-${KERNEL_VERSION%.*}
         # sudo apt-get build-dep linux
 
-        KERNEL_SOURCE_DIR=$(readlink -f linux-source-${KERNEL_VERSION%.*})
-        [ ! -d $KERNEL_SOURCE_DIR ] && tar xf /usr/src/linux-source-${KERNEL_VERSION%.*}.tar.xz
-
+        KERNEL_VERSION=$(uname -r)
+        KERNEL_SOURCE_DIR=$(readlink -f linux-source-${KERNEL_VERSION})
+        [ ! -d ${KERNEL_SOURCE_DIR} ] && tar xf /usr/src/linux-source-${KERNEL_VERSION%.*}.tar.xz && mv linux-source-${KERNEL_VERSION%.*} ${KERNEL_SOURCE_DIR}
+        
         ;;
 esac
 
-
 (
     cd $KERNEL_SOURCE_DIR
+    cp /boot/config-$(uname -r) .config
     make olddefconfig
+    make scripts
     make prepare
+    make modules_prepare
 )
 
 #################################################################################################################
@@ -39,7 +41,6 @@ XPMEM_PFX=$(readlink -f xpmem_prefix)
 rm -rf $XPMEM_PFX
 
 [ ! -d xpmem ] && git clone git@github.com:tzafrir-mellanox/xpmem.git -b kmake_config
-PATCH_1=$(readlink -f 63.patch)
 (
     cd xpmem
     (git clean -xdff && git checkout .)
@@ -48,7 +49,7 @@ PATCH_1=$(readlink -f 63.patch)
     fi
     if [ ! -f Makefile ]; then
         ./configure --prefix=${XPMEM_PFX} \
-            --with-kerneldir=$KERNEL_SOURCE_DIR --with-kernelvers=${KERNEL_VERSION%.*}
+            --with-kerneldir=${KERNEL_SOURCE_DIR} --with-kernelvers=${KERNEL_VERSION}
             # --with-module-prefix=/lib/modules/$(uname -r) \
     fi
     make
