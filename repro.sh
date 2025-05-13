@@ -9,6 +9,9 @@ case ${ID_LIKE:-${ID}} in
         # # sudo dnf install gcc gcc-g++ gcc-gfortran make autoconf automake libtool pkgconf xz tar bzip2 patch
         # dnf download --source kernel
         # sudo dnf group install "Development Tools"
+        KERNEL_VERSION=$(uname -r)
+        KERNEL_SOURCE_DIR=/usr/src/kernels/${KERNEL_VERSION}/
+        
         ;;
     debian)
         KERNEL_VERSION=$(uname -r)
