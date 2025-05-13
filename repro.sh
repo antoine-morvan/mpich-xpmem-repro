@@ -25,6 +25,11 @@ case ${ID_LIKE:-${ID}} in
 esac
 
 
+(
+    cd $KERNEL_SOURCE_DIR
+    make olddefconfig
+    make prepare
+)
 
 #################################################################################################################
 ## mellanox version
