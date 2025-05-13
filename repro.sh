@@ -48,12 +48,15 @@ rm -rf $XPMEM_PFX
         ./autogen.sh
     fi
     if [ ! -f Makefile ]; then
-        ./configure --prefix=${XPMEM_PFX} \
+        ./configure --prefix=/ \
             --with-kerneldir=${KERNEL_SOURCE_DIR} --with-kernelvers=${KERNEL_VERSION}
             # --with-module-prefix=/lib/modules/$(uname -r) \
     fi
     make
-    make install
+    sudo make install
+    sudo depmod
+    sudo modprobe xpmem
+    sudo bash -c "echo xpmem > /etc/modules-load.d/xpmem.conf"
 )
 exit 0
 #################################################################################################################
